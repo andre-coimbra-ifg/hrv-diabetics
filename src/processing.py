@@ -15,13 +15,15 @@
 
 import logging
 import numpy as np
-from scipy.signal import medfilt
+
+# from scipy.signal import medfilt
 from config import (
     OUTLIER_THRESHOLD,
     MEDIAN_FILTER_KERNEL_SIZE,
     LOW_RRI,
     HIGH_RRI,
     QUALITY_THRESHOLD,
+    POLICY,
 )
 
 
@@ -51,7 +53,7 @@ def detect_outliers(rr_intervals):
 
 # Função para avaliar a qualidade do sinal
 def evaluate_signal_quality(rr_intervals, threshold=QUALITY_THRESHOLD):
-    logging.debug(f"Avaliando  qualidade do sinal...")
+    logging.debug(f"Avaliando a qualidade do sinal com threshold {threshold}")
 
     ectopic_beats = detect_ectopic_beats(rr_intervals)
     outliers = detect_outliers(rr_intervals)
@@ -70,11 +72,11 @@ def evaluate_signal_quality(rr_intervals, threshold=QUALITY_THRESHOLD):
 
     if valid_percentage < threshold:
         logging.warning(
-            f"Sinal com baixa qualidade ({valid_percentage*100:.2f}%) e foi removido da análise!"
+            f"Sinal com baixa qualidade ({valid_percentage*100:.2f}%) foi removido da análise!"
         )
     else:
         logging.info(
-            f"Sinal tem boa qualidade ({valid_percentage*100:.2f}%) e foi incluído na análise!"
+            f"Sinal tem boa qualidade ({valid_percentage*100:.2f}%) foi mantido na análise!"
         )
 
     return valid_percentage
@@ -134,21 +136,45 @@ def remove_outliers(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
 
     return rr_intervals_cleaned
 
-
-def apply_median_filter(rr_intervals, kernel_size=MEDIAN_FILTER_KERNEL_SIZE):
+    # def apply_median_filter(rr_intervals, kernel_size=MEDIAN_FILTER_KERNEL_SIZE):
     """Aplica filtro da mediana para suavizar os dados."""
-    smoothed = medfilt(rr_intervals, kernel_size=kernel_size)
-    logging.debug(f"Filtro de mediana aplicado (kernel size={kernel_size})")
-    return smoothed
+    # smoothed = medfilt(rr_intervals, kernel_size=kernel_size)
+    # logging.debug(f"Filtro de mediana aplicado (kernel size={kernel_size})")
+    # return smoothed
 
 
 def denoise_rr_intervals(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
     """Pipeline de denoise."""
     logging.debug("Iniciando denoise do sinal")
     rr_intervals = rr_intervals * 1000  # Convertendo para milissegundos
-    rri_without_outliers = remove_outliers(
-        rr_intervals=rr_intervals, low_rri=low_rri, high_rri=high_rri
+    rr_cleaned = remove_outliers(rr_intervals, low_rri, high_rri)
+    # rr_smoothed = apply_median_filter(rr_cleaned)
+    # rr_final = rr_smoothed / 1000
+    rr_final = np.array(rr_cleaned) / 1000
+    logging.debug("Denoise concluído")
+    return rr_final
+
+
+def truncate_rr_intervals(rr_intervals, target_duration, policy=POLICY):
+    """
+    Corta os intervalos RR para garantir que todos tenham a mesma duração.
+    """
+    logging.debug("Iniciando truncamento do sinal")
+
+    accumulated_time = 0.0
+    truncated_rr = []
+
+    for rr in rr_intervals:
+        if accumulated_time + rr > target_duration:
+            break
+        truncated_rr.append(rr)
+        accumulated_time += rr
+
+    logging.debug(
+        f"Tamanho inicial: {len(rr_intervals)}, tamanho após truncamento: {len(truncated_rr)}"
+    )
+    logging.debug(
+        f"Tempo acumulado após truncamento: {accumulated_time:.2f} s (limite: {target_duration:.2f} s)"
     )
 
-    logging.debug("Denoise concluído")
-    return
+    return np.array(truncated_rr)
