@@ -3,11 +3,11 @@ import os
 CONTROL_DIR = "../data/control"
 TEST_DIR = "../data/diabetic"
 
-POLICY = "early_valid"  # "early_valid", "late_valid", "best_quality"
+POLICY = "early"  # "early", "late", "best"
 
 CLIP_START_LENGHT = 10  # Amount of entries (RR) to clip from the start of the data
 
-QUALITY_THRESHOLD = 0.95  # Threshold for quality of the data
+QUALITY_THRESHOLD = 0.97  # Threshold for quality of the data
 
 # THRESHOLDS IN MILLISECONDS
 LOW_RRI = 300
