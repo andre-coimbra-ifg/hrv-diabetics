@@ -172,4 +172,5 @@ cython_debug/
 
 
 content/
+data/
 .DS_Store
