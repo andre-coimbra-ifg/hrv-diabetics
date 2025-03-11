@@ -12,7 +12,7 @@ def load_rr_intervals(file_path):
         # Se os dados tiverem apenas uma coluna, retorna diretamente
         if data.ndim == 1:  # Caso em que há apenas uma coluna
             logging.debug(f"Arquivo possui apenas uma coluna.")
-            return data
+            return data / 1000 if max(data) > 100 else data
 
         else:
             # Se houver duas colunas, retorna apenas a segunda (intervalos RR)

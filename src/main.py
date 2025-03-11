@@ -2,14 +2,17 @@ import os
 import logging
 import numpy as np
 from file_io import load_rr_intervals, save_rr_intervals
+from statistics_dir import generate_statistics_report
 from processing import (
     denoise_rr_intervals,
     evaluate_signal_quality,
     truncate_rr_intervals,
 )
-from utils import list_rr_files, get_output_path
+from utils import list_rr_files, get_output_path, ask_user, get_relative_output_path
 from config import (
     OUTPUT_DIR,
+    DENOISED_OUTPUT_DIR,
+    TRUNCATED_OUTPUT_DIR,
     CONTROL_DIR,
     TEST_DIR,
     POLICY,
@@ -31,8 +34,10 @@ def process_data(control_dir, test_dir, policy="early_valid"):
     min_length = float("inf")
     min_file = None
 
-    for dir in [control_dir, test_dir]:
-        files.extend(list_rr_files(dir))
+    for directory in [control_dir, test_dir]:
+        files.extend(list_rr_files(directory))
+
+    logging.error(f"DIRECTORY SIZE: {len(files)}")
 
     if not files:
         logging.warning(
@@ -40,10 +45,7 @@ def process_data(control_dir, test_dir, policy="early_valid"):
         )
         return
 
-    for file in files:
-        print(file)
-
-    for file in files:
+    for file in files[:]:
         rr_intervals = load_rr_intervals(file)
 
         if rr_intervals is not None:
@@ -51,10 +53,16 @@ def process_data(control_dir, test_dir, policy="early_valid"):
             logging.info(f"Removendo os {CLIP_START_LENGHT} primeiros RRis do arquivo")
             rr_intervals = rr_intervals[CLIP_START_LENGHT:]
 
-            if evaluate_signal_quality(rr_intervals) < QUALITY_THRESHOLD:
+            signal_quality = evaluate_signal_quality(rr_intervals)
+            if signal_quality < QUALITY_THRESHOLD:
                 files.remove(file)
-                continue
+                logging.warning(
+                    f"Sinal com baixa qualidade ({signal_quality*100:.2f}%), removido da análise: '{file}'"
+                )
             else:
+                logging.info(
+                    f"Sinal com boa qualidade ({signal_quality*100:.2f}%), mantido na análise: '{file}'"
+                )
                 rr_cleaned = denoise_rr_intervals(rr_intervals, LOW_RRI, HIGH_RRI)
 
                 length = np.sum(rr_cleaned)
@@ -63,44 +71,64 @@ def process_data(control_dir, test_dir, policy="early_valid"):
                     min_file = file
 
                 output_file = get_output_path(
-                    file, OUTPUT_DIR, control_dir, test_dir, "_denoised.txt"
+                    file, DENOISED_OUTPUT_DIR, control_dir, test_dir, "_denoised.txt"
                 )
                 save_rr_intervals(output_file, rr_cleaned)
 
-    for file in files:
+    min_length_minute = (min_length / 60).round(1)
+    logging.info(
+        f"O arquivo com menor duração é '{min_file}' com {min_length_minute} minutos"
+    )
 
+    logging.info(f"Truncando os sinais para {min_length_minute} minutos")
+    for file in files:
         denoised_file = get_output_path(
-            file, OUTPUT_DIR, control_dir, test_dir, "_denoised.txt"
+            file, DENOISED_OUTPUT_DIR, control_dir, test_dir, "_denoised.txt"
         )
 
         rr_intervals = load_rr_intervals(denoised_file)
         rr_truncated = truncate_rr_intervals(rr_intervals, min_length)
 
-        min_length_minute = (min_length / 60).round(1)
-        logging.info(
-            f"Shortest file is '{min_file}' with length of {min_length_minute} minutes"
-        )
-        dir = control_dir if control_dir in file else test_dir
         output_file = get_output_path(
             file,
-            OUTPUT_DIR,
+            TRUNCATED_OUTPUT_DIR,
             control_dir,
             test_dir,
-            f"_trunc_{min_length_minute}min.txt",
+            f"_trunc_{min_length_minute}_min.txt",
         )
         save_rr_intervals(output_file, rr_truncated)
+    logging.info(f"Processo de truncamento concluído")
 
 
-# logging.info(f"Processamento concluído para o grupo: {group_name}")
+def run_data_processing():
+    logging.info("Iniciando o processamento dos dados...")
+    process_data(CONTROL_DIR, TEST_DIR, POLICY)
+    logging.info("Processamento de todos os grupos concluído")
+
+    trunc_control_dir = get_relative_output_path(TRUNCATED_OUTPUT_DIR, CONTROL_DIR)
+    trunc_test_dir = get_relative_output_path(TRUNCATED_OUTPUT_DIR, TEST_DIR)
+    run_data_analysis(OUTPUT_DIR, trunc_control_dir, trunc_test_dir, "report_trunc.txt")
+
+
+def run_data_analysis(output_dir, control_dir, test_dir, report_filename="report.txt"):
+    logging.info("Realizando uma análise inicial dos dados...")
+    # Definir o nome do arquivo de saída para o relatório
+    report_file = os.path.join(output_dir, report_filename)
+
+    # # Gera o relatório estatístico
+    generate_statistics_report(control_dir, test_dir, report_file)
+    logging.info("Análise de dados concluída com sucesso.")
 
 
 def main():
     setup_logging()
-    logging.info("Iniciando o processamento dos dados...")
 
-    process_data(CONTROL_DIR, TEST_DIR, POLICY)
-
-    logging.info("Processamento de todos os grupos concluído")
+    if ask_user("Deseja realizar uma análise inicial dos dados?") == "s":
+        run_data_analysis(OUTPUT_DIR, CONTROL_DIR, TEST_DIR, "report_initial.txt")
+        if ask_user("Deseja continuar com o processamento dos dados?") == "s":
+            run_data_processing()
+    else:
+        run_data_processing()
 
 
 if __name__ == "__main__":

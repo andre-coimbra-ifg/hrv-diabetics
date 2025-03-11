@@ -22,7 +22,6 @@ from config import (
     MEDIAN_FILTER_KERNEL_SIZE,
     LOW_RRI,
     HIGH_RRI,
-    QUALITY_THRESHOLD,
     POLICY,
 )
 
@@ -52,8 +51,8 @@ def detect_outliers(rr_intervals):
 
 
 # Função para avaliar a qualidade do sinal
-def evaluate_signal_quality(rr_intervals, threshold=QUALITY_THRESHOLD):
-    logging.debug(f"Avaliando a qualidade do sinal com threshold {threshold}")
+def evaluate_signal_quality(rr_intervals):
+    logging.debug(f"Avaliando a qualidade do sinal")
 
     ectopic_beats = detect_ectopic_beats(rr_intervals)
     outliers = detect_outliers(rr_intervals)
@@ -69,15 +68,6 @@ def evaluate_signal_quality(rr_intervals, threshold=QUALITY_THRESHOLD):
     logging.debug(f"Percentual de batimentos válidos: {valid_percentage*100:.2f}%")
     logging.debug(f"Percentual de batimentos ectópicos: {ectopic_percentage*100:.2f}%")
     logging.debug(f"Percentual de outliers: {outlier_percentage*100:.2f}%")
-
-    if valid_percentage < threshold:
-        logging.warning(
-            f"Sinal com baixa qualidade ({valid_percentage*100:.2f}%) foi removido da análise!"
-        )
-    else:
-        logging.info(
-            f"Sinal tem boa qualidade ({valid_percentage*100:.2f}%) foi mantido na análise!"
-        )
 
     return valid_percentage
 

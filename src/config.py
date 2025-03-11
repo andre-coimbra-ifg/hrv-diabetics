@@ -18,6 +18,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Diretórios de saída
 OUTPUT_DIR = os.path.join(BASE_DIR, "../data/output")
+DENOISED_OUTPUT_DIR = os.path.join(BASE_DIR, "../data/output/denoised")
+TRUNCATED_OUTPUT_DIR = os.path.join(BASE_DIR, "../data/output/truncated")
 
 # Parâmetros para processamento
 OUTLIER_THRESHOLD = 3
@@ -32,6 +34,7 @@ test_basename = os.path.basename(TEST_DIR)
 
 # Criação de diretórios se não existirem
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(os.path.join(OUTPUT_DIR, control_basename), exist_ok=True)
-os.makedirs(os.path.join(OUTPUT_DIR, test_basename), exist_ok=True)
+for directory in [DENOISED_OUTPUT_DIR, TRUNCATED_OUTPUT_DIR]:
+    os.makedirs(os.path.join(directory, control_basename), exist_ok=True)
+    os.makedirs(os.path.join(directory, test_basename), exist_ok=True)
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
