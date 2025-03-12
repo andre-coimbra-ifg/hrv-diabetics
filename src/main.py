@@ -100,7 +100,7 @@ def process_data(control_dir, test_dir, policy="early_valid"):
     logging.info(f"Processo de truncamento concluído")
 
 
-def run_data_processing():
+def run_data_processing_and_analysis():
     logging.info("Iniciando o processamento dos dados...")
     process_data(CONTROL_DIR, TEST_DIR, POLICY)
     logging.info("Processamento de todos os grupos concluído")
@@ -126,9 +126,9 @@ def main():
     if ask_user("Deseja realizar uma análise inicial dos dados?") == "s":
         run_data_analysis(OUTPUT_DIR, CONTROL_DIR, TEST_DIR, "report_initial.txt")
         if ask_user("Deseja continuar com o processamento dos dados?") == "s":
-            run_data_processing()
+            run_data_processing_and_analysis()
     else:
-        run_data_processing()
+        run_data_processing_and_analysis()
 
 
 if __name__ == "__main__":

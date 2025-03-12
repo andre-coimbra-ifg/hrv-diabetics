@@ -1,6 +1,8 @@
 # Copyright (C) [2025] [Aura Healthcare]
 # Modificado por [André Coimbra] em [2025]
 #
+# https://pypi.org/project/hrv-analysis/
+#
 # Este programa é software livre; você pode redistribuí-lo e/ou modificá-lo
 # sob os termos da Licença Pública Geral GNU conforme publicada pela Free Software Foundation,
 # na versão 3 da licença ou (a seu critério) qualquer versão posterior.
@@ -38,7 +40,7 @@ def detect_ectopic_beats(rr_intervals, threshold=1.2):
     return ectopic_beats
 
 
-# Função para detectar outliers usando IQR
+# Função para detectar outliers usando IQR (Interquartile Range)
 def detect_outliers(rr_intervals):
     rr_intervals = np.array(rr_intervals)
     Q1 = np.percentile(rr_intervals, 25)
@@ -59,6 +61,7 @@ def evaluate_signal_quality(rr_intervals):
 
     # O número de batimentos é 1 a mais do que o número de intervalos RR
     total_beats = len(rr_intervals) + 1
+    # Máscara booleana que seleciona apenas os batimentos válidos
     valid_beats = np.sum(~ectopic_beats & ~outliers)
     valid_percentage = valid_beats / total_beats
 
@@ -133,13 +136,124 @@ def remove_outliers(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
     # return smoothed
 
 
+def remove_ectopic_beats(rr_intervals=[], removing_rule=0.2):
+    """
+    RR-intervals differing by more than the removing_rule from the one proceeding it are removed.
+
+    Parameters
+    ---------
+    rr_intervals : list
+        list of RR-intervals
+    removing_rule : int
+        Percentage criteria of difference with previous RR-interval at which we consider
+        that it is abnormal. 
+    
+    Returns
+    ---------
+    nn_intervals : list
+        list of NN Interval
+
+    References
+    ----------
+    .. [5] Kamath M.V., Fallen E.L.: Correction of the Heart Rate Variability Signal for Ectopics \
+    and Miss- ing Beats, In: Malik M., Camm A.J.
+
+    .. [6] Geometric Methods for Heart Rate Variability Assessment - Malik M et al
+    """
+    # set first element in list
+    outlier_count = 0
+    previous_outlier = False
+    nn_intervals = [rr_intervals[0]]
+    for i, rr_interval in enumerate(rr_intervals[:-1]):
+
+        if previous_outlier:
+            nn_intervals.append(rr_intervals[i + 1])
+            previous_outlier = False
+            continue
+
+        if abs(rr_interval - rr_intervals[i + 1]) <= removing_rule * rr_interval:
+            nn_intervals.append(rr_intervals[i + 1])
+        else:
+            nn_intervals.append(np.nan)
+            outlier_count += 1
+            previous_outlier = True
+
+    logging.info("{} ectopic beat(s) have been deleted.".format(outlier_count))
+
+    return nn_intervals
+
+
+def interpolate_nan_values(
+    rr_intervals=[],
+    interpolation_method="linear",
+    limit_area=None,
+    limit_direction="forward",
+    limit=None,
+):
+    """
+    Function that interpolate Nan values with linear interpolation
+
+    Parameters
+    ---------
+    rr_intervals : list
+        RrIntervals list.
+    interpolation_method : str
+        Method used to interpolate Nan values of series.
+    limit_area: str
+        If limit is specified, consecutive NaNs will be filled with this restriction.
+    limit_direction: str
+        If limit is specified, consecutive NaNs will be filled in this direction.
+    limit: int
+        Maximum number of NaNs to fill consecutively.
+    ---------
+    interpolated_rr_intervals : list
+        new list with outliers replaced by interpolated values.
+    """
+    rr_intervals = np.array(rr_intervals)
+
+    # Handle the first NaNs (fill with the next value)
+    if np.isnan(rr_intervals[0]):
+        start_idx = 0
+        while np.isnan(rr_intervals[start_idx]):
+            start_idx += 1
+        rr_intervals[0:start_idx] = rr_intervals[start_idx]
+
+    # Interpolate NaN values (linear interpolation by default)
+    for i in range(1, len(rr_intervals) - 1):
+        if np.isnan(rr_intervals[i]):
+            if interpolation_method == "linear":
+                # Linear interpolation: find previous and next non-NaN values
+                prev_value = rr_intervals[i - 1]
+                next_value = rr_intervals[i + 1]
+                rr_intervals[i] = (prev_value + next_value) / 2
+            elif interpolation_method == "zero":
+                rr_intervals[i] = rr_intervals[
+                    i - 1
+                ]  # Zero interpolation (forward fill)
+            # Add more methods here if needed
+
+    # Apply limit if specified
+    if limit is not None:
+        nan_count = 0
+        for i in range(len(rr_intervals)):
+            if np.isnan(rr_intervals[i]):
+                nan_count += 1
+                if nan_count > limit:
+                    break
+            else:
+                nan_count = 0
+
+    return rr_intervals.tolist()
+
+
 def denoise_rr_intervals(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
     """Pipeline de denoise."""
     logging.debug("Iniciando denoise do sinal")
     rr_intervals = rr_intervals * 1000  # Convertendo para milissegundos
-    rr_cleaned = remove_outliers(rr_intervals, low_rri, high_rri)
-    # rr_smoothed = apply_median_filter(rr_cleaned)
-    # rr_final = rr_smoothed / 1000
+    rr_intervals_without_outliers = remove_outliers(rr_intervals, low_rri, high_rri)
+    interpolated_rr_intervals = interpolate_nan_values(rr_intervals_without_outliers)
+    rr_intervals_without_ectopic = remove_ectopic_beats(interpolated_rr_intervals)
+    rr_cleaned = interpolate_nan_values(rr_intervals_without_ectopic)
     rr_final = np.array(rr_cleaned) / 1000
     logging.debug("Denoise concluído")
     return rr_final
