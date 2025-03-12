@@ -4,7 +4,7 @@ import numpy as np
 from file_io import load_rr_intervals, save_rr_intervals
 from statistics_dir import generate_statistics_report
 from processing import (
-    denoise_rr_intervals,
+    get_nn_intervals,
     evaluate_signal_quality,
     truncate_rr_intervals,
 )
@@ -61,7 +61,7 @@ def process_data(control_dir, test_dir, policy="early_valid"):
                 logging.info(
                     f"Sinal com boa qualidade ({signal_quality*100:.2f}%), mantido na análise: '{file}'"
                 )
-                rr_cleaned = denoise_rr_intervals(rr_intervals, LOW_RRI, HIGH_RRI)
+                rr_cleaned = get_nn_intervals(rr_intervals, LOW_RRI, HIGH_RRI)
 
                 length = np.sum(rr_cleaned)
                 if length < min_length:

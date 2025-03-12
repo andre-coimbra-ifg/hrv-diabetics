@@ -17,6 +17,7 @@
 
 import logging
 import numpy as np
+import pandas as pd
 
 # from scipy.signal import medfilt
 from config import (
@@ -28,86 +29,16 @@ from config import (
 )
 
 
-# Função para detectar batimentos ectópicos
-def detect_ectopic_beats(rr_intervals, threshold=1.2):
+def detect_outliers(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
+    """Function that detects RR-interval outliers."""
     rr_intervals = np.array(rr_intervals)
-    rr_ratio = rr_intervals[1:] / rr_intervals[:-1]
-    # Detecta batimentos ectópicos com base na variação do threshold
-    ectopic_beats = np.full(rr_intervals.shape, False)
-    ectopic_beats[1:] = np.abs(rr_ratio - 1) > threshold
 
-    return ectopic_beats
+    # Máscara booleana para detectar valores fora dos limites
+    outliers_mask = ~(rr_intervals < low_rri) | (rr_intervals > high_rri)
 
+    logging.info(f"{np.sum(outliers_mask)} outlier(s) encontrado(s).")
 
-def remove_ectopic_beats(rr_intervals, threshold=0.2):
-    """
-    RR-intervals differing by more than the threshold from the one proceeding it are removed.
-
-    Parameters
-    ---------
-    rr_intervals : list of RR-intervals
-    threshold : percentage criteria of difference with previous RR-interval at which we consider that it is abnormal.
-
-    Returns
-    ---------
-    nn_intervals : list of NN Interval
-
-    References
-    ----------
-    - Kamath M.V., Fallen E.L.: Correction of the Heart Rate Variability Signal for Ectopics and Missing Beats, In: Malik M., Camm A.J.
-
-    - Geometric Methods for Heart Rate Variability Assessment - Malik M et al
-    """
-    rr_intervals = np.array(rr_intervals)
-    rr_ratio = rr_intervals[1:] / rr_intervals[:-1]
-
-    ectopic_beats = np.full(rr_intervals.shape, False)
-    # Detecta batimentos ectópicos com base na variação do threshold
-    ectopic_beats[1:] = np.abs(rr_ratio - 1) > (1 + threshold)
-
-    nn_intervals = np.full(rr_intervals.shape, np.nan)
-    nn_intervals[0] = rr_intervals[0]  # Mantém o primeiro valor
-    nn_intervals[1:] = np.where(~ectopic_beats[1:], rr_intervals[1:], np.nan)
-
-    outlier_count = np.sum(ectopic_beats)
-    logging.info(f"{outlier_count} ectopic beat(s) have been deleted.")
-
-    return nn_intervals
-
-
-# Função para detectar outliers usando IQR (Interquartile Range)
-def detect_outliers(rr_intervals):
-    rr_intervals = np.array(rr_intervals)
-    Q1 = np.percentile(rr_intervals, 25)
-    Q3 = np.percentile(rr_intervals, 75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    outliers = (rr_intervals < lower_bound) | (rr_intervals > upper_bound)
-    return outliers
-
-
-# Função para avaliar a qualidade do sinal
-def evaluate_signal_quality(rr_intervals):
-    logging.debug(f"Avaliando a qualidade do sinal")
-
-    ectopic_beats = detect_ectopic_beats(rr_intervals)
-    outliers = detect_outliers(rr_intervals)
-
-    # O número de batimentos é 1 a mais do que o número de intervalos RR
-    total_beats = len(rr_intervals) + 1
-    # Máscara booleana que seleciona apenas os batimentos válidos
-    valid_beats = np.sum(~ectopic_beats & ~outliers)
-    valid_percentage = valid_beats / total_beats
-
-    ectopic_percentage = np.sum(ectopic_beats) / total_beats
-    outlier_percentage = np.sum(outliers) / total_beats
-
-    logging.debug(f"Percentual de batimentos válidos: {valid_percentage*100:.2f}%")
-    logging.debug(f"Percentual de batimentos ectópicos: {ectopic_percentage*100:.2f}%")
-    logging.debug(f"Percentual de outliers: {outlier_percentage*100:.2f}%")
-
-    return valid_percentage
+    return outliers_mask
 
 
 def remove_outliers(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
@@ -146,37 +77,109 @@ def remove_outliers(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
 
     # Conversion RrInterval to Heart rate ==> rri (ms) =  1000 / (bpm / 60)
     # rri 2000 => bpm 30 / rri 300 => bpm 200
-    rr_intervals_cleaned = [
-        rri if high_rri >= rri >= low_rri else np.nan for rri in rr_intervals
-    ]
 
-    outliers_list = []
-    for rri in rr_intervals:
-        if high_rri >= rri >= low_rri:
-            pass
-        else:
-            outliers_list.append(rri)
+    rr_intervals = np.array(rr_intervals)
 
-    nan_count = sum(np.isnan(rr_intervals_cleaned))
-    logging.info(f"{nan_count} outlier(s) have been deleted.")
+    # Substitui outliers por NaN
+    outliers = (rr_intervals < low_rri) | (rr_intervals > high_rri)
+    rr_intervals_cleaned = np.where(outliers, np.nan, rr_intervals)
+
+    # Coleta os valores considerados outliers
+    outliers_list = rr_intervals[outliers].tolist()
+
+    # Log dos resultados
+    nan_count = np.sum(outliers)
+    logging.info(f"{nan_count} outlier(s) removido(s).")
     if nan_count:
-        logging.debug(f"The outlier(s) value(s) are : {outliers_list}")
+        logging.debug(f"Outlier(s): {outliers_list}")
 
     return rr_intervals_cleaned
 
-    # def apply_median_filter(rr_intervals, kernel_size=MEDIAN_FILTER_KERNEL_SIZE):
-    """Aplica filtro da mediana para suavizar os dados."""
-    # smoothed = medfilt(rr_intervals, kernel_size=kernel_size)
-    # logging.debug(f"Filtro de mediana aplicado (kernel size={kernel_size})")
-    # return smoothed
+
+# Função para detectar batimentos ectópicos
+def detect_ectopic_beats(rr_intervals, threshold=0.2):
+    rr_intervals = np.array(rr_intervals)
+    rr_ratio = rr_intervals[1:] / rr_intervals[:-1]
+    # Detecta batimentos ectópicos com base na variação do threshold
+    ectopic_beats = np.full(rr_intervals.shape, False)
+    ectopic_beats[1:] = np.abs(rr_ratio - 1) > (1 + threshold)
+
+    logging.info(f"{np.sum(ectopic_beats)} batimentos(s) ectópico(s) encontrado(s).")
+
+    return ectopic_beats
+
+
+def remove_ectopic_beats(rr_intervals, threshold=0.2):
+    """
+    RR-intervals differing by more than the threshold from the one proceeding it are removed.
+
+    Parameters
+    ---------
+    rr_intervals : list of RR-intervals
+    threshold : percentage criteria of difference with previous RR-interval at which we consider that it is abnormal.
+
+    Returns
+    ---------
+    nn_intervals : list of NN Interval
+
+    References
+    ----------
+    - Kamath M.V., Fallen E.L.: Correction of the Heart Rate Variability Signal for Ectopics and Missing Beats, In: Malik M., Camm A.J.
+
+    - Geometric Methods for Heart Rate Variability Assessment - Malik M et al
+    """
+    rr_intervals = np.array(rr_intervals)
+    rr_ratio = rr_intervals[1:] / rr_intervals[:-1]
+
+    # Detecta batimentos ectópicos com base no threshold
+    ectopic_beats = np.full(rr_intervals.shape, False)
+    ectopic_beats[1:] = np.abs(rr_ratio - 1) > (1 + threshold)
+
+    # Cria array para armazenar os intervalos limpos
+    nn_intervals = np.full(rr_intervals.shape, np.nan)
+    nn_intervals[0] = rr_intervals[0]
+    nn_intervals[1:] = np.where(~ectopic_beats[1:], rr_intervals[1:], np.nan)
+
+    # Coleta os valores dos batimentos ectópicos removidos
+    removed_beats = rr_intervals[ectopic_beats].tolist()
+
+    # Log dos resultados
+    outlier_count = len(removed_beats)
+    logging.info(f"{outlier_count} batimento(s) ectópico(s) removido(s).")
+    if outlier_count:
+        logging.debug(f"Batimento(s) ectópico(s) removido(s): {removed_beats}")
+
+    return nn_intervals
+
+
+# Função para avaliar a qualidade do sinal
+def evaluate_signal_quality(rr_intervals):
+    logging.debug(f"Avaliando a qualidade do sinal")
+
+    outliers = detect_outliers(rr_intervals)
+    ectopic_beats = detect_ectopic_beats(rr_intervals)
+
+    total_beats = len(rr_intervals)
+    # Máscara booleana que seleciona apenas os batimentos válidos
+    valid_beats = np.sum(~ectopic_beats & ~outliers)
+    valid_percentage = valid_beats / total_beats
+
+    ectopic_percentage = np.sum(ectopic_beats) / total_beats
+    outlier_percentage = np.sum(outliers) / total_beats
+
+    logging.debug(f"Percentual de batimentos válidos: {valid_percentage*100:.2f}%")
+    logging.debug(f"Percentual de outliers: {outlier_percentage*100:.2f}%")
+    logging.debug(f"Percentual de batimentos ectópicos: {ectopic_percentage*100:.2f}%")
+
+    return valid_percentage
 
 
 def interpolate_nan_values(
-    rr_intervals=[],
+    rr_intervals,
     interpolation_method="linear",
+    limit=None,
     limit_area=None,
     limit_direction="forward",
-    limit=None,
 ):
     """
     Function that interpolate Nan values with linear interpolation
@@ -197,54 +200,33 @@ def interpolate_nan_values(
     interpolated_rr_intervals : list
         new list with outliers replaced by interpolated values.
     """
-    rr_intervals = np.array(rr_intervals)
-
-    # Handle the first NaNs (fill with the next value)
     if np.isnan(rr_intervals[0]):
-        start_idx = 0
-        while np.isnan(rr_intervals[start_idx]):
-            start_idx += 1
-        rr_intervals[0:start_idx] = rr_intervals[start_idx]
+        # Preenche os valores iniciais NaN com o primeiro valor não NaN
+        start_idx = np.where(~np.isnan(rr_intervals))[0][0]
+        rr_intervals[:start_idx] = rr_intervals[start_idx]
 
-    # Interpolate NaN values (linear interpolation by default)
-    for i in range(1, len(rr_intervals) - 1):
-        if np.isnan(rr_intervals[i]):
-            if interpolation_method == "linear":
-                # Linear interpolation: find previous and next non-NaN values
-                prev_value = rr_intervals[i - 1]
-                next_value = rr_intervals[i + 1]
-                rr_intervals[i] = (prev_value + next_value) / 2
-            elif interpolation_method == "zero":
-                rr_intervals[i] = rr_intervals[
-                    i - 1
-                ]  # Zero interpolation (forward fill)
-            # Add more methods here if needed
+    # Converte para pandas Series e interpola valores NaN
+    interpolated_rr_intervals = pd.Series(rr_intervals).interpolate(
+        method=interpolation_method,
+        limit=limit,
+        limit_area=limit_area,
+        limit_direction=limit_direction,
+    )
 
-    # Apply limit if specified
-    if limit is not None:
-        nan_count = 0
-        for i in range(len(rr_intervals)):
-            if np.isnan(rr_intervals[i]):
-                nan_count += 1
-                if nan_count > limit:
-                    break
-            else:
-                nan_count = 0
-
-    return rr_intervals.tolist()
+    return interpolated_rr_intervals.values.tolist()
 
 
-def denoise_rr_intervals(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
-    """Pipeline de denoise."""
-    logging.debug("Iniciando denoise do sinal")
+def get_nn_intervals(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
+    """Function that computes NN Intervals from RR-intervals."""
+    logging.debug("Iniciando conversão do sinal de RRi para NNi")
     rr_intervals = rr_intervals * 1000  # Convertendo para milissegundos
     rr_intervals_without_outliers = remove_outliers(rr_intervals, low_rri, high_rri)
     interpolated_rr_intervals = interpolate_nan_values(rr_intervals_without_outliers)
     rr_intervals_without_ectopic = remove_ectopic_beats(interpolated_rr_intervals)
-    rr_cleaned = interpolate_nan_values(rr_intervals_without_ectopic)
-    rr_final = np.array(rr_cleaned) / 1000
-    logging.debug("Denoise concluído")
-    return rr_final
+    interpolated_nn_intervals = interpolate_nan_values(rr_intervals_without_ectopic)
+    nn_intervals = np.array(interpolated_nn_intervals) / 1000
+    logging.debug("Conversão para NNi concluída")
+    return nn_intervals
 
 
 def truncate_rr_intervals(rr_intervals, target_duration, policy=POLICY):

@@ -44,6 +44,7 @@ def evaluate_directory_statistics(directory):
     mean_duration = np.mean(durations)
 
     qualities = [stats["quality"] for stats in files_stats.values()]
+    mean_quality = np.mean(qualities)
     below_threshold = sum(q < QUALITY_THRESHOLD for q in qualities)
     above_threshold = len(qualities) - below_threshold
 
@@ -60,6 +61,7 @@ def evaluate_directory_statistics(directory):
         ),
         "Mean Duration (min)": round(mean_duration / 60, 2),
         "Quality Threshold (%)": round(QUALITY_THRESHOLD * 100, 1),
+        "Mean Quality (%)": round(mean_quality * 100, 2),
         "Files Below Threshold": below_threshold,
         "Files Above Threshold": above_threshold,
     }
