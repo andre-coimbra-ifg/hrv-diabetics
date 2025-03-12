@@ -1,4 +1,4 @@
-# vfc-diabeticos-2025
+# vfc-diabeticos
 
 Pré-processamento de dados de RRi para cálculo da HRV.
 
