@@ -18,3 +18,48 @@ vfc-diabeticos/
 │   └── ...
 ├── README.md
 └── requirements.txt
+
+3. A metodologia adotada pode ser resumida em 4 etapas:
+    1. Descarte dos 10 primeiros registros de RRi;
+
+    2. Avaliação a qualidade dos sinais de RRi e descarte dos que não atendem ao limiar estabelecido. A análise da qualidade do sinal é realizada da seguinte forma:
+        a) Detecção de Outliers;
+        b) Detecção de Batimentos Ectópicos;
+
+    3. Transformação dos sinais de RRi em NNi:
+        a) Substituindo os Outliers por meio da interpolação linear;
+        b) Substituindo os Batimentos Ectópicos por meio da interpolação linear;
+    
+    4. Truncamento dos sinais de NNi considerando o registro com menor duração em tempo (não em número de batimentos).
+
+4. Ao final, os resultados serão salvos no diretório `data/output/`, considerando 2 diretórios:
+    - `denoised/`: com os NNi completos
+    - `truncated/`: com os NNi truncados
+    - Além disso, será salvo um relatório com informações estatísticas básicas sobre o diretório 'truncated/', conforme exemplo abaixo:
+
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Info                  |          Control Group           |            Test Group             |
+        +=======================+==================================+===================================+
+        | Directory             | ../data/output/truncated/control | ../data/output/truncated/diabetic |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Number of Files       |                X                 |                 X                 |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Max Duration (min)    |                X                 |                 X                 |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | File Max Duration     |         example_x_min.txt        |         example_X_min.txt         |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Min Duration (min)    |                X                 |                 X                 |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | File Min Duration     |         example_x_min.txt        |         example_x_min.txt         |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Mean Duration (min)   |                X                 |                 X                 |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Quality Threshold (%) |               95.0               |               95.0                |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Mean Quality (%)      |                X                 |                 X                 |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Files Below Threshold |                0                 |                 0                 |
+        +-----------------------+----------------------------------+-----------------------------------+
+        | Files Above Threshold |                X                 |                 X                 |
+        +-----------------------+----------------------------------+-----------------------------------+
+                
