@@ -18,6 +18,7 @@ vfc-diabeticos/
 │   └── ...
 ├── README.md
 └── requirements.txt
+```
 
 3. A metodologia adotada pode ser resumida em 4 etapas:
     1. Descarte dos 10 primeiros registros de RRi;
