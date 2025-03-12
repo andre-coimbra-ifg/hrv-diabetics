@@ -32,12 +32,47 @@ from config import (
 def detect_ectopic_beats(rr_intervals, threshold=1.2):
     rr_intervals = np.array(rr_intervals)
     rr_ratio = rr_intervals[1:] / rr_intervals[:-1]
-    ectopic_beats = (
-        np.abs(rr_ratio - 1) > threshold
-    )  # Batimentos com variação > threshold
-    # Adiciona 'False' no final para igualar o tamanho
-    ectopic_beats = np.concatenate(([False], ectopic_beats))  # Adiciona False no início
+    # Detecta batimentos ectópicos com base na variação do threshold
+    ectopic_beats = np.full(rr_intervals.shape, False)
+    ectopic_beats[1:] = np.abs(rr_ratio - 1) > threshold
+
     return ectopic_beats
+
+
+def remove_ectopic_beats(rr_intervals, threshold=0.2):
+    """
+    RR-intervals differing by more than the threshold from the one proceeding it are removed.
+
+    Parameters
+    ---------
+    rr_intervals : list of RR-intervals
+    threshold : percentage criteria of difference with previous RR-interval at which we consider that it is abnormal.
+
+    Returns
+    ---------
+    nn_intervals : list of NN Interval
+
+    References
+    ----------
+    - Kamath M.V., Fallen E.L.: Correction of the Heart Rate Variability Signal for Ectopics and Missing Beats, In: Malik M., Camm A.J.
+
+    - Geometric Methods for Heart Rate Variability Assessment - Malik M et al
+    """
+    rr_intervals = np.array(rr_intervals)
+    rr_ratio = rr_intervals[1:] / rr_intervals[:-1]
+
+    ectopic_beats = np.full(rr_intervals.shape, False)
+    # Detecta batimentos ectópicos com base na variação do threshold
+    ectopic_beats[1:] = np.abs(rr_ratio - 1) > (1 + threshold)
+
+    nn_intervals = np.full(rr_intervals.shape, np.nan)
+    nn_intervals[0] = rr_intervals[0]  # Mantém o primeiro valor
+    nn_intervals[1:] = np.where(~ectopic_beats[1:], rr_intervals[1:], np.nan)
+
+    outlier_count = np.sum(ectopic_beats)
+    logging.info(f"{outlier_count} ectopic beat(s) have been deleted.")
+
+    return nn_intervals
 
 
 # Função para detectar outliers usando IQR (Interquartile Range)
@@ -134,53 +169,6 @@ def remove_outliers(rr_intervals, low_rri=LOW_RRI, high_rri=HIGH_RRI):
     # smoothed = medfilt(rr_intervals, kernel_size=kernel_size)
     # logging.debug(f"Filtro de mediana aplicado (kernel size={kernel_size})")
     # return smoothed
-
-
-def remove_ectopic_beats(rr_intervals=[], removing_rule=0.2):
-    """
-    RR-intervals differing by more than the removing_rule from the one proceeding it are removed.
-
-    Parameters
-    ---------
-    rr_intervals : list
-        list of RR-intervals
-    removing_rule : int
-        Percentage criteria of difference with previous RR-interval at which we consider
-        that it is abnormal. 
-    
-    Returns
-    ---------
-    nn_intervals : list
-        list of NN Interval
-
-    References
-    ----------
-    .. [5] Kamath M.V., Fallen E.L.: Correction of the Heart Rate Variability Signal for Ectopics \
-    and Miss- ing Beats, In: Malik M., Camm A.J.
-
-    .. [6] Geometric Methods for Heart Rate Variability Assessment - Malik M et al
-    """
-    # set first element in list
-    outlier_count = 0
-    previous_outlier = False
-    nn_intervals = [rr_intervals[0]]
-    for i, rr_interval in enumerate(rr_intervals[:-1]):
-
-        if previous_outlier:
-            nn_intervals.append(rr_intervals[i + 1])
-            previous_outlier = False
-            continue
-
-        if abs(rr_interval - rr_intervals[i + 1]) <= removing_rule * rr_interval:
-            nn_intervals.append(rr_intervals[i + 1])
-        else:
-            nn_intervals.append(np.nan)
-            outlier_count += 1
-            previous_outlier = True
-
-    logging.info("{} ectopic beat(s) have been deleted.".format(outlier_count))
-
-    return nn_intervals
 
 
 def interpolate_nan_values(

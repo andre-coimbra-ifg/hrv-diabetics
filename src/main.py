@@ -37,8 +37,6 @@ def process_data(control_dir, test_dir, policy="early_valid"):
     for directory in [control_dir, test_dir]:
         files.extend(list_rr_files(directory))
 
-    logging.error(f"DIRECTORY SIZE: {len(files)}")
-
     if not files:
         logging.warning(
             f"Nenhum arquivo encontrado nos diretórios '{control_dir}' e '{test_dir}'"
