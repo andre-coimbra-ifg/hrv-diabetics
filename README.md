@@ -22,10 +22,10 @@ vfc-diabeticos/
 
 A metodologia adotada pode ser resumida em 4 etapas:
 
-    1. Descarte dos 10 primeiros registros de RRi;
+    1. Descarte das 10 primeiras entradas de cada arquivo (paciente);
 
-    2. Avaliação a qualidade dos sinais de RRi e descarte dos que não atendem ao limiar
-       estabelecido. A análise da qualidade do sinal é realizada da seguinte forma:
+    2. Avaliação da qualidade dos sinais de RRi e descarte dos arquivos que não atenderem
+       ao limiar estabelecido. A análise da qualidade do sinal é realizada a partir da:
         - Detecção de Outliers;
         - Detecção de Batimentos Ectópicos;
 
@@ -33,13 +33,14 @@ A metodologia adotada pode ser resumida em 4 etapas:
         - Substituindo os Outliers por meio da interpolação linear;
         - Substituindo os Batimentos Ectópicos por meio da interpolação linear;
     
-    4. Truncamento dos sinais de NNi considerando o registro com menor duração em tempo
-       (não em número de batimentos).
+    4. Truncamento dos arquivos de NNi, mantendo a parte inicial do arquivo, em função do
+       registro de menor duração em tempo (não em número de batimentos).
 
-Ao final, os resultados serão salvos no diretório `data/output/`, considerando 2 diretórios:
+Ao final, os resultados serão salvos no diretório `data/output/`, considerando 2 subdiretórios:
 
     - `denoised/`: com os NNi completos
     - `truncated/`: com os NNi truncados
+    
     - Além disso, será salvo um relatório com informações estatísticas básicas sobre o
       diretório 'truncated/', conforme exemplo abaixo:
 
