@@ -42,7 +42,7 @@ Ao final, os resultados serão salvos no diretório `data/output/`, considerando
 - `truncated/`: com os NNi truncados
     
 - Além disso, será salvo um relatório com informações estatísticas básicas sobre o
-  diretório 'truncated/', conforme exemplo abaixo:
+  diretório `truncated/`, conforme exemplo abaixo:
     
         +-----------------------+----------------------------------+-----------------------------------+
         | Info                  |          Control Group           |            Test Group             |
