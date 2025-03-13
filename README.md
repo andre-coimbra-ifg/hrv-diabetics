@@ -25,9 +25,9 @@ vfc-diabeticos/
 1. Descarte das 10 primeiras entradas de cada arquivo (paciente);
 
 2. Avaliação da qualidade dos sinais de RRi e descarte dos arquivos que não atenderem
-   ao limiar estabelecido. A análise da qualidade do sinal é realizada a partir da:
-    - Detecção de Outliers;
-    - Detecção de Batimentos Ectópicos;
+   ao limiar estabelecido (90%). A análise da qualidade do sinal é realizada a partir da:
+    - Detecção de Outliers (RRi < 300 ou RRi > 2000);
+    - Detecção de Batimentos Ectópicos (RRi+1/RRi não pode variar mais que 20%, para mais ou para menos);
 
 3. Transformação dos sinais de RRi em NNi:
     - Substituindo os Outliers por meio da interpolação linear;
@@ -61,7 +61,7 @@ Ao final, os resultados serão salvos no diretório `data/output/`, considerando
         +-----------------------+----------------------------------+-----------------------------------+
         | Mean Duration (min)   |                x                 |                 x                 |
         +-----------------------+----------------------------------+-----------------------------------+
-        | Quality Threshold (%) |               95.0               |               95.0                |
+        | Quality Threshold (%) |               90.0               |               90.0                |
         +-----------------------+----------------------------------+-----------------------------------+
         | Mean Quality (%)      |                x                 |                 x                 |
         +-----------------------+----------------------------------+-----------------------------------+
