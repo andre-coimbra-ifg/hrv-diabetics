@@ -2,7 +2,7 @@ import os
 import logging
 import numpy as np
 from file_io import load_rr_intervals, save_rr_intervals
-from statistics_dir import generate_statistics_report
+from statistics_dir import generate_statistics_report, generate_duration_file_report
 from processing import (
     get_nn_intervals,
     evaluate_signal_quality,
@@ -105,7 +105,9 @@ def run_data_processing_and_analysis():
 
     trunc_control_dir = get_relative_output_path(TRUNCATED_OUTPUT_DIR, CONTROL_DIR)
     trunc_test_dir = get_relative_output_path(TRUNCATED_OUTPUT_DIR, TEST_DIR)
-    run_data_analysis(OUTPUT_DIR, trunc_control_dir, trunc_test_dir, "report_trunc.txt")
+
+    report_file = os.path.join(OUTPUT_DIR, "report_trunc.txt")
+    generate_statistics_report(trunc_control_dir, trunc_test_dir, report_file)
 
 
 def run_data_analysis(output_dir, control_dir, test_dir, report_filename="report.txt"):
@@ -115,6 +117,11 @@ def run_data_analysis(output_dir, control_dir, test_dir, report_filename="report
 
     # # Gera o relatório estatístico
     generate_statistics_report(control_dir, test_dir, report_file)
+
+    generate_duration_file_report(
+        control_dir, test_dir, report_file.replace(".txt", "_duration.txt")
+    )
+
     logging.info("Análise de dados concluída com sucesso.")
 
 

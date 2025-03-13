@@ -115,3 +115,74 @@ def generate_statistics_report(control_dir, test_dir, output_file):
         f.write(table_string)
 
     logging.info(f"Relatório salvo em: {output_file}")
+
+
+def list_files_by_duration(directory):
+    """
+    Lista os arquivos de RRi ordenados pela duração em ordem crescente.
+
+    Args:
+        directory (str): Caminho para o diretório contendo os arquivos de RRi.
+
+    Returns:
+        list: Lista de tuplas (nome_arquivo, duração_em_minutos), ordenada por duração.
+    """
+    files = list_rr_files(directory)
+    if not files:
+        logging.warning(f"Nenhum arquivo encontrado em {directory}")
+        return []
+
+    file_durations = []
+
+    for file in files:
+        try:
+            rr_intervals = load_rr_intervals(file)  # Carrega os intervalos RR
+            duration = np.sum(rr_intervals) / 60  # Converte para minutos
+            file_durations.append((os.path.basename(file), round(duration, 2)))
+        except Exception as e:
+            logging.error(f"Erro ao processar {file}: {e}")
+
+    # Ordena pela duração (em minutos) em ordem crescente
+    file_durations.sort(key=lambda x: x[1])
+
+    return file_durations
+
+
+def generate_duration_file_report(control_dir, test_dir, output_file):
+    """
+    Gera um relatório detalhado com todos os arquivos e seus tempos em minutos,
+    separados por grupos (controle e teste), organizados em ordem crescente.
+
+    Args:
+        control_dir (str): Caminho para o diretório de controle.
+        test_dir (str): Caminho para o diretório de teste.
+        output_file (str): Arquivo para salvar o relatório.
+    """
+
+    control_files = list_files_by_duration(control_dir)
+    test_files = list_files_by_duration(test_dir)
+
+    # Gerar tabela formatada
+    table = []
+    table.append(["Grupo", "Nome do Arquivo", "Duração (min)"])
+
+    for file, duration in control_files:
+        table.append(["Controle", file, duration])
+
+    for file, duration in test_files:
+        table.append(["Diabéticos", file, duration])
+
+    table_string = tabulate(
+        table, headers="firstrow", tablefmt="grid", colalign=("left", "left", "center")
+    )
+
+    # Exibir no console
+    print(f"\n{'='*30} DURATION FILE REPORT {'='*30}")
+    print(table_string)
+
+    # Salvar em arquivo
+    with open(output_file, "w") as f:
+        f.write(f"{'='*29} DURATION FILE REPORT {'='*29}\n\n")
+        f.write(table_string)
+
+    logging.info(f"Relatório de duração salvo em: {output_file}")
