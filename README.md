@@ -20,7 +20,7 @@ vfc-diabeticos/
 └── requirements.txt
 ```
 
-A metodologia adotada pode ser resumida em 4 etapas:
+**A metodologia adotada pode ser resumida em 4 etapas:**
 
 1. Descarte das 10 primeiras entradas de cada arquivo (paciente);
 
@@ -38,34 +38,34 @@ A metodologia adotada pode ser resumida em 4 etapas:
 
 Ao final, os resultados serão salvos no diretório `data/output/`, considerando 2 subdiretórios:
 
-    - `denoised/`: com os NNi completos
-    - `truncated/`: com os NNi truncados
+- `denoised/`: com os NNi completos
+- `truncated/`: com os NNi truncados
     
-    - Além disso, será salvo um relatório com informações estatísticas básicas sobre o
-      diretório 'truncated/', conforme exemplo abaixo:
-
-        +-----------------------+----------------------------------+
-        | Info                  |          Control Group           |
-        +=======================+==================================+
-        | Directory             | ../data/output/truncated/control |
-        +-----------------------+----------------------------------+
-        | Number of Files       |                X                 |
-        +-----------------------+----------------------------------+
-        | Max Duration (min)    |                X                 |
-        +-----------------------+----------------------------------+
-        | File Max Duration     |         example_x_min.txt        |
-        +-----------------------+----------------------------------+
-        | Min Duration (min)    |                X                 |
-        +-----------------------+----------------------------------+
-        | File Min Duration     |         example_x_min.txt        |
-        +-----------------------+----------------------------------+
-        | Mean Duration (min)   |                X                 |
-        +-----------------------+----------------------------------+
-        | Quality Threshold (%) |               95.0               |
-        +-----------------------+----------------------------------+
-        | Mean Quality (%)      |                X                 |
-        +-----------------------+----------------------------------+
-        | Files Below Threshold |                0                 |
-        +-----------------------+----------------------------------+
-        | Files Above Threshold |                X                 |
-        +-----------------------+----------------------------------+
+- Além disso, será salvo um relatório com informações estatísticas básicas sobre o
+  diretório 'truncated/', conforme exemplo abaixo:
+    
+    +-----------------------+----------------------------------+
+    | Info                  |          Control Group           |
+    +=======================+==================================+
+    | Directory             | ../data/output/truncated/control |
+    +-----------------------+----------------------------------+
+    | Number of Files       |                X                 |
+    +-----------------------+----------------------------------+
+    | Max Duration (min)    |                X                 |
+    +-----------------------+----------------------------------+
+    | File Max Duration     |         example_x_min.txt        |
+    +-----------------------+----------------------------------+
+    | Min Duration (min)    |                X                 |
+    +-----------------------+----------------------------------+
+    | File Min Duration     |         example_x_min.txt        |
+    +-----------------------+----------------------------------+
+    | Mean Duration (min)   |                X                 |
+    +-----------------------+----------------------------------+
+    | Quality Threshold (%) |               95.0               |
+    +-----------------------+----------------------------------+
+    | Mean Quality (%)      |                X                 |
+    +-----------------------+----------------------------------+
+    | Files Below Threshold |                0                 |
+    +-----------------------+----------------------------------+
+    | Files Above Threshold |                X                 |
+    +-----------------------+----------------------------------+
