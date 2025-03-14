@@ -22,7 +22,7 @@ vfc-diabeticos/
 
 **A metodologia adotada pode ser resumida em 4 etapas:**
 
-1. Descarte das 10 primeiras entradas de cada arquivo (paciente);
+1. Descarte das 10 primeiras entradas de RRi cada arquivo (paciente);
 
 2. Avaliação da qualidade dos sinais de RRi e descarte dos arquivos que não atenderem
    ao limiar estabelecido (90%). A análise da qualidade do sinal é realizada a partir da:
@@ -44,28 +44,15 @@ Ao final, os resultados serão salvos no diretório `data/output/`, considerando
 - Além disso, será salvo um relatório com informações estatísticas básicas sobre o
   diretório `truncated/`, conforme exemplo abaixo:
     
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Info                  |          Control Group           |            Test Group             |
-        +=======================+==================================+===================================+
-        | Directory             | ../data/output/truncated/control | ../data/output/truncated/diabetic |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Number of Files       |                x                 |                 x                 |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Max Duration (min)    |                x                 |                 x                 |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | File Max Duration     |              x.txt               |               x.txt               |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Min Duration (min)    |                x                 |                 x                 |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | File Min Duration     |              x.txt               |               x.txt               |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Mean Duration (min)   |                x                 |                 x                 |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Quality Threshold (%) |               90.0               |               90.0                |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Mean Quality (%)      |                x                 |                 x                 |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Files Below Threshold |                x                 |                 x                 |
-        +-----------------------+----------------------------------+-----------------------------------+
-        | Files Above Threshold |                x                 |                 x                 |
-        +-----------------------+----------------------------------+-----------------------------------+
+        ---------- GRUPO: X ----------
+        Diretório: ../data/output/truncated/X
+        Número de Arquivos: X
+        Duração Máxima (min): X
+        Arquivo com Duração Máxima: filename_trunc_X_min.txt
+        Duração Mínima (min): X
+        Arquivo com Duração Mínima: filename_trunc_X_min.txt
+        Duração Média (min): X
+        Limite de Qualidade (%): 90.0
+        Qualidade Média (%): X
+        Arquivos Abaixo do Limite: 0
+        Arquivos Acima do Limite: 167
