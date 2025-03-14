@@ -49,24 +49,41 @@ def evaluate_directory_statistics(directory):
     above_threshold = len(qualities) - below_threshold
 
     stats = {
-        "Directory": directory,
-        "Number of Files": num_files,
-        "Max Duration (min)": round(max_duration / 60, 2),
-        "File Max Duration": os.path.basename(
+        "Diretório": directory,
+        "Número de Arquivos": num_files,
+        "Duração Máxima (min)": round(max_duration / 60, 2),
+        "Arquivo com Duração Máxima": os.path.basename(
             max(files_stats, key=lambda x: files_stats[x]["duration"])
         ),
-        "Min Duration (min)": round(min_duration / 60, 2),
-        "File Min Duration": os.path.basename(
+        "Duração Mínima (min)": round(min_duration / 60, 2),
+        "Arquivo com Duração Mínima": os.path.basename(
             min(files_stats, key=lambda x: files_stats[x]["duration"])
         ),
-        "Mean Duration (min)": round(mean_duration / 60, 2),
-        "Quality Threshold (%)": round(QUALITY_THRESHOLD * 100, 1),
-        "Mean Quality (%)": round(mean_quality * 100, 2),
-        "Files Below Threshold": below_threshold,
-        "Files Above Threshold": above_threshold,
+        "Duração Média (min)": round(mean_duration / 60, 2),
+        "Limite de Qualidade (%)": round(QUALITY_THRESHOLD * 100, 1),
+        "Qualidade Média (%)": round(mean_quality * 100, 2),
+        "Arquivos Abaixo do Limite": below_threshold,
+        "Arquivos Acima do Limite": above_threshold,
     }
 
     return stats
+
+
+def generate_section_lines(group_name, metrics, report):
+    """
+    Gera as linhas formatadas para uma seção de um grupo (Control ou Test).
+
+    Args:
+        group_name (str): Nome do grupo (Control ou Test).
+        metrics (list): Lista das métricas a serem exibidas.
+        report (dict): Dicionário com as estatísticas para cada grupo.
+
+    Returns:
+        str: Linhas formatadas para a seção.
+    """
+    lines = [f"{'-'*10} GRUPO: {group_name.upper()} {'-'*10}"]
+    lines.extend([f"{metric}: {report[group_name][metric]}" for metric in metrics])
+    return "\n".join(lines)
 
 
 def generate_statistics_report(control_dir, test_dir, output_file):
@@ -85,34 +102,26 @@ def generate_statistics_report(control_dir, test_dir, output_file):
         logging.warning("Nenhuma estatística foi gerada — arquivos ausentes.")
         return
 
-    report = {"Control": control_stats, "Test": test_stats}
+    report = {"Controle": control_stats, "Teste": test_stats}
 
-    # Exibe a tabela no console
-    print(f"\n{'='*30} INFORMAÇÕES BÁSICAS {'='*30}")
+    metrics = list(report["Controle"].keys())
 
-    # Obter todas as métricas
-    metrics = list(report["Control"].keys())
+    # Gerar a seção do Grupo de Controle
+    control_section = generate_section_lines("Controle", metrics, report)
 
-    # Criar uma tabela reorganizada
-    table = [
-        [metric, report["Control"][metric], report["Test"][metric]]
-        for metric in metrics
-    ]
+    # Gerar a seção do Grupo de Teste
+    test_section = generate_section_lines("Teste", metrics, report)
 
-    # Exibir a tabela formatada
-    table_string = tabulate(
-        table,
-        headers=["Info", "Control Group", "Test Group"],
-        tablefmt="grid",
-        colalign=("left", "center", "center"),
-    )
+    # Exibir no console
+    print(f"\n{'='*15} INFORMAÇÕES BÁSICAS SOBRE OS GRUPOS {'='*15}")
+    print(control_section)
+    print(test_section)
 
-    print(table_string)
-
-    # Salva em arquivo
+    # Salvar em arquivo
     with open(output_file, "w") as f:
-        f.write(f"{'='*29} INFORMAÇÕES BÁSICAS {'='*29}\n\n")
-        f.write(table_string)
+        f.write(f"{'='*15} INFORMAÇÕES BÁSICAS SOBRE OS GRUPOS {'='*15}\n\n")
+        f.write(control_section + "\n\n")
+        f.write(test_section + "\n")
 
     logging.info(f"Relatório salvo em: {output_file}")
 
@@ -162,27 +171,29 @@ def generate_duration_file_report(control_dir, test_dir, output_file):
     control_files = list_files_by_duration(control_dir)
     test_files = list_files_by_duration(test_dir)
 
-    # Gerar tabela formatada
-    table = []
-    table.append(["Grupo", "Nome do Arquivo", "Duração (min)"])
+    # Gerar linhas formatadas para o relatório
+    # Cabeçalho do relatório
+    lines = [
+        f"{'='*10} RELATÓRIO DE DURAÇÃO DOS ARQUIVOS {'='*10}\n",
+        "-> Os arquivos estão organizados em ordem crescente de duração.\n",
+        "Formato: X.Nome do Arquivo | Duração (min)",
+    ]
 
-    for file, duration in control_files:
-        table.append(["Controle", file, duration])
+    # Função para formatar as linhas dos arquivos com contagem regressiva
+    def format_group_lines(group_name, files):
+        lines.append(f"\n\nGRUPO: {group_name.upper()}:")
+        total_files = len(files)
+        for i, (file, duration) in zip(range(total_files, 0, -1), files):
+            lines.append(f"   {i}. {file} | {duration}")
 
-    for file, duration in test_files:
-        table.append(["Diabéticos", file, duration])
-
-    table_string = tabulate(
-        table, headers="firstrow", tablefmt="grid", colalign=("left", "left", "center")
-    )
+    # Adicionar os arquivos dos grupos "Controle" e "Diabéticos"
+    format_group_lines("Controle", control_files)
+    format_group_lines("Diabéticos", test_files)
 
     # Exibir no console
-    print(f"\n{'='*30} DURATION FILE REPORT {'='*30}")
-    print(table_string)
+    print("\n".join(lines))
 
     # Salvar em arquivo
     with open(output_file, "w") as f:
-        f.write(f"{'='*29} DURATION FILE REPORT {'='*29}\n\n")
-        f.write(table_string)
-
+        f.write("\n".join(lines))
     logging.info(f"Relatório de duração salvo em: {output_file}")
