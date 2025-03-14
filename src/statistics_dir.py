@@ -34,7 +34,7 @@ def evaluate_directory_statistics(directory):
 
     if num_files == 0:
         logging.warning(f"Nenhum arquivo encontrado em {directory}")
-        return None
+        return None, None
 
     # Estatísticas básicas
     durations = [stats["duration"] for stats in files_stats.values()]
@@ -65,7 +65,7 @@ def evaluate_directory_statistics(directory):
         "Arquivos Acima do Limite": above_threshold,
     }
 
-    return stats
+    return stats, files_stats
 
 
 def generate_section_lines(group_name, metrics, report):
@@ -94,8 +94,8 @@ def generate_statistics_report(control_dir, test_dir, output_file):
         test_dir (str): Caminho para o diretório de teste.
         output_file (str): Arquivo para salvar o relatório.
     """
-    control_stats = evaluate_directory_statistics(control_dir)
-    test_stats = evaluate_directory_statistics(test_dir)
+    control_stats, control_file_stats = evaluate_directory_statistics(control_dir)
+    test_stats, test_file_stats = evaluate_directory_statistics(test_dir)
 
     if control_stats is None and test_stats is None:
         logging.warning("Nenhuma estatística foi gerada — arquivos ausentes.")
@@ -112,9 +112,10 @@ def generate_statistics_report(control_dir, test_dir, output_file):
     test_section = generate_section_lines("Teste", metrics, report)
 
     # Exibir no console
-    print(f"\n{'='*15} INFORMAÇÕES BÁSICAS SOBRE OS GRUPOS {'='*15}")
-    print(control_section)
-    print(test_section)
+    title_initial = f"\n{'='*15} INFORMAÇÕES BÁSICAS SOBRE OS GRUPOS {'='*15}"
+    logging.info(title_initial)
+    logging.info(control_section)
+    logging.info(test_section)
 
     # Salvar em arquivo
     with open(output_file, "w") as f:
@@ -124,39 +125,33 @@ def generate_statistics_report(control_dir, test_dir, output_file):
 
     logging.info(f"Relatório salvo em: {output_file}")
 
-
-def list_files_by_duration(directory):
-    """
-    Lista os arquivos de RRi ordenados pela duração em ordem crescente.
-
-    Args:
-        directory (str): Caminho para o diretório contendo os arquivos de RRi.
-
-    Returns:
-        list: Lista de tuplas (nome_arquivo, duração_em_minutos), ordenada por duração.
-    """
-    files = list_rr_files(directory)
-    if not files:
-        logging.warning(f"Nenhum arquivo encontrado em {directory}")
-        return []
-
-    file_durations = []
-
-    for file in files:
-        try:
-            rr_intervals = load_rr_intervals(file)  # Carrega os intervalos RR
-            duration = np.sum(rr_intervals) / 60  # Converte para minutos
-            file_durations.append((os.path.basename(file), round(duration, 2)))
-        except Exception as e:
-            logging.error(f"Erro ao processar {file}: {e}")
-
-    # Ordena pela duração (em minutos) em ordem crescente
-    file_durations.sort(key=lambda x: x[1])
-
-    return file_durations
+    return report, control_file_stats, test_file_stats
 
 
-def generate_duration_file_report(control_dir, test_dir, output_file):
+def generate_duration_file_report(control_file_stats, test_file_stats, output_file):
+    title_duration = (
+        f"{'='*10} RELATÓRIO SOBRE A DURAÇÃO E QUALIDADE DOS ARQUIVOS {'='*10}\n\n"
+        + "-> Os arquivos estão organizados em ordem crescente de duração.\n"
+        + "Formato: X.Nome do Arquivo | Duração (min) | Qualidade (%)"
+    )
+
+    control_duration_report = generate_group_duration_report(
+        control_file_stats, "Controle"
+    )
+
+    test_duration_report = generate_group_duration_report(test_file_stats, "Teste")
+
+    logging.info(title_duration)
+    logging.info(control_duration_report)
+    logging.info(control_duration_report)
+
+    with open(output_file, "w") as f:
+        f.write(title_duration)
+        f.write(control_duration_report)
+        f.write(test_duration_report)
+
+
+def generate_group_duration_report(group_file_stats, group_name):
     """
     Gera um relatório detalhado com todos os arquivos e seus tempos em minutos,
     separados por grupos (controle e teste), organizados em ordem crescente.
@@ -167,32 +162,25 @@ def generate_duration_file_report(control_dir, test_dir, output_file):
         output_file (str): Arquivo para salvar o relatório.
     """
 
-    control_files = list_files_by_duration(control_dir)
-    test_files = list_files_by_duration(test_dir)
-
     # Gerar linhas formatadas para o relatório
     # Cabeçalho do relatório
-    lines = [
-        f"{'='*10} RELATÓRIO DE DURAÇÃO DOS ARQUIVOS {'='*10}\n",
-        "-> Os arquivos estão organizados em ordem crescente de duração.\n",
-        "Formato: X.Nome do Arquivo | Duração (min)",
-    ]
+    lines = []
 
-    # Função para formatar as linhas dos arquivos com contagem regressiva
-    def format_group_lines(group_name, files):
-        lines.append(f"\n\nGRUPO: {group_name.upper()}:")
-        total_files = len(files)
-        for i, (file, duration) in zip(range(total_files, 0, -1), files):
-            lines.append(f"   {i}. {file} | {duration}")
+    lines.append(f"\n\nGRUPO: {group_name.upper()}:")
 
-    # Adicionar os arquivos dos grupos "Controle" e "Diabéticos"
-    format_group_lines("Controle", control_files)
-    format_group_lines("Diabéticos", test_files)
+    total_files = len(group_file_stats)
+    # Ordena os arquivos pela duração de forma crescente
+    sorted_files = sorted(group_file_stats.items(), key=lambda x: x[1]["duration"])
 
-    # Exibir no console
-    print("\n".join(lines))
+    for i, (file_path, file_data) in zip(range(total_files, 0, -1), sorted_files):
+        file_name = os.path.basename(file_path)
+        quality_percent = file_data["quality"] * 100
+        duration_minute = file_data["duration"] / 60
+        lines.append(
+            f"   {i}. {file_name} | {duration_minute:.2f} | {quality_percent:.1f}"
+        )
 
-    # Salvar em arquivo
-    with open(output_file, "w") as f:
-        f.write("\n".join(lines))
-    logging.info(f"Relatório de duração salvo em: {output_file}")
+    logging.info("\n".join(lines))
+    report = "\n".join(lines)
+
+    return report

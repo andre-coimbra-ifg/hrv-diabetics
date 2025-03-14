@@ -118,11 +118,18 @@ def run_data_analysis(
     report_file = os.path.join(output_dir, report_filename)
 
     # # Gera o relatório estatístico
-    generate_statistics_report(control_dir, test_dir, report_file)
-
-    generate_duration_file_report(
-        control_dir, test_dir, report_file.replace(".txt", "_duracao.txt")
+    _, control_file_stats, test_file_stats = generate_statistics_report(
+        control_dir, test_dir, report_file
     )
+
+    if control_file_stats is None and test_file_stats is None:
+        logging.warning("Nenhuma relatório de duração foi gerado — arquivos ausentes.")
+    else:
+        generate_duration_file_report(
+            control_file_stats,
+            test_file_stats,
+            report_file.replace(".txt", "_duracao.txt"),
+        )
 
     logging.info("Análise de dados concluída com sucesso.")
 
