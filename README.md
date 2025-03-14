@@ -29,7 +29,7 @@ vfc-diabeticos/
     - Detecção de Outliers (RRi < 300 ou RRi > 2000);
     - Detecção de Batimentos Ectópicos (RRi+1/RRi não pode variar mais que 20%, para mais ou para menos);
 
-3. Transformação dos sinais de RRi em NNi:
+3. Transformação dos sinais de RRi em NNi (com 3 casas decimais):
     - Substituindo os Outliers por meio da interpolação linear;
     - Substituindo os Batimentos Ectópicos por meio da interpolação linear;
     
