@@ -128,10 +128,12 @@ def generate_statistics_report(control_dir, test_dir, output_file):
     return report, control_file_stats, test_file_stats
 
 
-def generate_duration_file_report(control_file_stats, test_file_stats, output_file):
+def generate_duration_and_quality_file_report(
+    control_file_stats, test_file_stats, output_file
+):
     title_duration = (
         f"{'='*10} RELATÓRIO SOBRE A DURAÇÃO E QUALIDADE DOS ARQUIVOS {'='*10}\n\n"
-        + "-> Os arquivos estão organizados em ordem crescente de duração.\n"
+        + "-> Os arquivos estão organizados em ordem crescente de duração.\n\n"
         + "Formato: X.Nome do Arquivo | Duração (min) | Qualidade (%)"
     )
 

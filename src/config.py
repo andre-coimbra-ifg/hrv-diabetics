@@ -3,6 +3,7 @@ import os
 CONTROL_DIR = "../data/control"
 TEST_DIR = "../data/diabetic"
 
+MIN_LENGTH_SEG = 300  # Duracao desejada para os arquivos truncados em segundos
 POLICY = "early"  # "early", "late", "best"
 
 CLIP_START_LENGHT = 10  # Amount of entries (RR) to clip from the start of the data
@@ -27,7 +28,7 @@ MEDIAN_FILTER_KERNEL_SIZE = 5
 
 # Configurações de logging
 LOG_FILE = os.path.join(BASE_DIR, "../data/logs/rr_processing.log")
-LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL = "WARNING"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 control_basename = os.path.basename(CONTROL_DIR)
 test_basename = os.path.basename(TEST_DIR)

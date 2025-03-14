@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 import os
+from config import CONTROL_DIR, TEST_DIR
 
 
 def load_rr_intervals(file_path):
@@ -35,18 +36,23 @@ def save_rr_intervals(file_path, data):
         logging.error(f"Erro ao salvar arquivo {file_path}: {e}")
 
 
-def save_removed_files(removed_files, threshold, output_dir, file_name):
+def save_removed_files(removed_files, param, threshold, output_dir, file_name):
     """Salva os arquivos removidos em um arquivo."""
-    title = (
-        f"{'='*10} LISTA DE ARQUIVOS REMOVIDOS COM QUALIDADE INFERIOR A {threshold*100:.1f}% {'='*10}\n\n"
-        + "Formato: X.Nome do Arquivo | Qualidade (%)\n\n"
-    )
+    title = f"{'='*10} LISTA DE ARQUIVOS REMOVIDOS COM {param.upper()} INFERIOR A {threshold:.1f} {'='*10}\n\n"
 
     output_file = os.path.join(output_dir, file_name)
     logging.debug(f"Salvando arquivo de arquivos removidos: {output_file}")
 
+    count_control = sum(CONTROL_DIR in file for file in removed_files.keys())
+    count_test = sum(TEST_DIR in file for file in removed_files.keys())
+
+    first_subtitle = f"Qtd. de arquivos removidos: Controle: {count_control} e Teste: {count_test}\n\n"
+    second_subtitle = f"Formato: X.Nome do Arquivo | {param.capitalize()}\n\n"
+
     with open(output_file, "w") as f:
         f.write(title)
+        f.write(first_subtitle)
+        f.write(second_subtitle)
         for file, quality in removed_files.items():
             f.write(file)
             f.write(f" | {quality:.2f}\n")

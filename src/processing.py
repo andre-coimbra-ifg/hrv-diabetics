@@ -239,7 +239,7 @@ def truncate_rr_intervals(rr_intervals, target_duration, policy=POLICY):
     truncated_rr = []
 
     for rr in rr_intervals:
-        if accumulated_time + rr > target_duration:
+        if accumulated_time > target_duration:
             break
         truncated_rr.append(rr)
         accumulated_time += rr
@@ -251,4 +251,4 @@ def truncate_rr_intervals(rr_intervals, target_duration, policy=POLICY):
         f"Tempo acumulado após truncamento: {accumulated_time:.2f} s (limite: {target_duration:.2f} s)"
     )
 
-    return np.array(truncated_rr)
+    return np.array(truncated_rr), accumulated_time

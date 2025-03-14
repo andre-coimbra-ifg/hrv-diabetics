@@ -2,7 +2,10 @@ import os
 import logging
 import numpy as np
 from file_io import load_rr_intervals, save_rr_intervals, save_removed_files
-from statistics_dir import generate_statistics_report, generate_duration_file_report
+from statistics_dir import (
+    generate_statistics_report,
+    generate_duration_and_quality_file_report,
+)
 from processing import (
     get_nn_intervals,
     evaluate_signal_quality,
@@ -20,11 +23,12 @@ from config import (
     HIGH_RRI,
     CLIP_START_LENGHT,
     QUALITY_THRESHOLD,
+    MIN_LENGTH_SEG,
 )
 from logging_config import setup_logging
 
 
-def process_data(control_dir, test_dir, policy="early_valid"):
+def process_data(control_dir, test_dir, min_length_seg=None, policy="early_valid"):
 
     logging.debug(
         f"Iniciando o processamento dos diretórios: '{control_dir}' e '{test_dir}'"
@@ -42,7 +46,7 @@ def process_data(control_dir, test_dir, policy="early_valid"):
             f"Nenhum arquivo encontrado nos diretórios '{control_dir}' e '{test_dir}'"
         )
         return
-    removed_files = {}
+    removed_low_quality = {}
 
     for file in files[:]:
         rr_intervals = load_rr_intervals(file)
@@ -56,7 +60,7 @@ def process_data(control_dir, test_dir, policy="early_valid"):
             if signal_quality < QUALITY_THRESHOLD:
                 files.remove(file)
                 # Salva o nome do arquivo e a qualidade no dicionário
-                removed_files[file] = round(signal_quality * 100, 2)
+                removed_low_quality[file] = round(signal_quality * 100, 2)
                 logging.warning(
                     f"Sinal com baixa qualidade ({signal_quality*100:.2f}%), removido da análise: '{file}'"
                 )
@@ -77,37 +81,65 @@ def process_data(control_dir, test_dir, policy="early_valid"):
                 save_rr_intervals(output_file, rr_cleaned)
 
     save_removed_files(
-        removed_files, QUALITY_THRESHOLD, OUTPUT_DIR, "removidos_baixa_qualidade.txt"
+        removed_low_quality,
+        "qualidade (%)",
+        round((QUALITY_THRESHOLD * 100), 1),
+        OUTPUT_DIR,
+        "removidos_baixa_qualidade.txt",
     )
 
-    min_length_minute = (min_length / 60).round(1)
+    min_length_minute = round((min_length / 60), 1)
     logging.info(
         f"O arquivo com menor duração é '{min_file}' com {min_length_minute} minutos"
     )
 
+    if min_length_seg:
+        min_length = min_length_seg
+        min_length_minute = round((min_length / 60), 1)
+
     logging.info(f"Truncando os sinais para {min_length_minute} minutos")
-    for file in files:
+
+    removed_low_duration = {}
+    for file in files[:]:
         denoised_file = get_output_path(
             file, DENOISED_OUTPUT_DIR, control_dir, test_dir, "_denoised.txt"
         )
 
         rr_intervals = load_rr_intervals(denoised_file)
-        rr_truncated = truncate_rr_intervals(rr_intervals, min_length)
 
-        output_file = get_output_path(
-            file,
-            TRUNCATED_OUTPUT_DIR,
-            control_dir,
-            test_dir,
-            f"_trunc_{min_length_minute}_min.txt",
+        rr_truncated, duration_truncated = truncate_rr_intervals(
+            rr_intervals, min_length
         )
-        save_rr_intervals(output_file, rr_truncated)
+
+        if duration_truncated < min_length:
+            logging.warning(
+                f"Arquivo '{file}' removido: tempo acumulado ({(duration_truncated):.2f} s) abaixo do limite mínimo ({(min_length):.2f} s)"
+            )
+            removed_low_duration[file] = round((duration_truncated / 60), 1)
+            files.remove(file)
+        else:
+            output_file = get_output_path(
+                file,
+                TRUNCATED_OUTPUT_DIR,
+                control_dir,
+                test_dir,
+                f"_trunc_{min_length_minute}_min.txt",
+            )
+            save_rr_intervals(output_file, rr_truncated)
+
+    save_removed_files(
+        removed_low_duration,
+        "duração (min)",
+        round((MIN_LENGTH_SEG / 60), 1),
+        OUTPUT_DIR,
+        "removidos_pouca_duracao.txt",
+    )
     logging.info(f"Processo de truncamento concluído")
 
 
 def run_data_processing_and_analysis():
     logging.info("Iniciando o processamento dos dados...")
-    process_data(CONTROL_DIR, TEST_DIR, POLICY)
+    process_data(CONTROL_DIR, TEST_DIR, MIN_LENGTH_SEG, POLICY)
     logging.info("Processamento de todos os grupos concluído")
 
     trunc_control_dir = get_relative_output_path(TRUNCATED_OUTPUT_DIR, CONTROL_DIR)
@@ -132,10 +164,10 @@ def run_data_analysis(
     if control_file_stats is None and test_file_stats is None:
         logging.warning("Nenhuma relatório de duração foi gerado — arquivos ausentes.")
     else:
-        generate_duration_file_report(
+        generate_duration_and_quality_file_report(
             control_file_stats,
             test_file_stats,
-            report_file.replace(".txt", "_duracao.txt"),
+            report_file.replace(".txt", "_duracao_e_qualidade.txt"),
         )
 
     logging.info("Análise de dados concluída com sucesso.")
