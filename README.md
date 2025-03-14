@@ -24,7 +24,7 @@ vfc-diabeticos/
 
 1. Descarte das 10 primeiras entradas de RRi de cada arquivo (paciente);
 
-2. Avaliação da qualidade dos sinais de RRi e descarte dos arquivos que não atenderem
+2. Avaliação da estabilidade dos sinais de RRi e descarte dos arquivos que não atenderem
    ao limiar estabelecido (90%). A análise da qualidade do sinal é realizada a partir da:
     - Detecção de Outliers (RRi < 300 ou RRi > 2000);
     - Detecção de Batimentos Ectópicos (RRi+1/RRi não pode variar mais que 20%, para mais ou para menos);
