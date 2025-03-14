@@ -1,4 +1,3 @@
-from tabulate import tabulate
 import os
 import numpy as np
 import logging
