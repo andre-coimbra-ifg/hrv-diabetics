@@ -25,7 +25,7 @@ vfc-diabeticos/
 1. Descarte das 10 primeiras entradas de RRi de cada arquivo (paciente);
 
 2. Avaliação da estabilidade dos sinais de RRi e descarte dos arquivos que não atenderem
-   ao limiar estabelecido (90%). A análise da qualidade do sinal é realizada a partir da:
+   o limiar estabelecido (90%). A estabilidade do sinal é calculada a partir da:
     - Detecção de Outliers (RRi < 300 ou RRi > 2000);
     - Detecção de Batimentos Ectópicos (RRi+1/RRi não pode variar mais que 20%, para mais ou para menos);
 
@@ -33,16 +33,17 @@ vfc-diabeticos/
     - Substituindo os Outliers por meio da interpolação linear;
     - Substituindo os Batimentos Ectópicos por meio da interpolação linear;
     
-4. Truncamento dos arquivos de NNi, mantendo a parte inicial do arquivo, em função do
-   registro de menor duração em tempo (não em número de batimentos).
+4. Truncamento dos arquivos de NNi, mantendo a parte inicial, em função de
+   um determinado valor de tempo (não em quantidade de NNi). Se não informado
+   o tempo mínimo desejado, considera-se o arquivo com menor duração como referência.
 
 Ao final, os resultados serão salvos no diretório `data/output/`, considerando 2 subdiretórios:
 
 - `denoised/`: com os NNi completos
 - `truncated/`: com os NNi truncados
     
-- Além disso, será salvo um relatório com informações estatísticas básicas sobre o
-  diretório `truncated/`, conforme exemplo abaixo:
+- Além disso, serão salvos relatórios com informações estatísticas básicas sobre os dados
+  iniciais e sobre os resultados, considerando o diretório `truncated/`, conforme exemplo abaixo:
     
         ---------- GRUPO: X ----------
         Diretório: ../data/output/truncated/X
