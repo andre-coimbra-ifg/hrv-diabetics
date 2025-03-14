@@ -50,12 +50,12 @@ def evaluate_directory_statistics(directory):
     stats = {
         "Diretório": directory,
         "Número de Arquivos": num_files,
-        "Duração Máxima (min)": round(max_duration / 60, 2),
-        "Arquivo com Duração Máxima": os.path.basename(
+        "Maior Duração (min)": round(max_duration / 60, 2),
+        "Arquivo com Maior Duração": os.path.basename(
             max(files_stats, key=lambda x: files_stats[x]["duration"])
         ),
-        "Duração Mínima (min)": round(min_duration / 60, 2),
-        "Arquivo com Duração Mínima": os.path.basename(
+        "Menor Duração (min)": round(min_duration / 60, 2),
+        "Arquivo com Menor Duração": os.path.basename(
             min(files_stats, key=lambda x: files_stats[x]["duration"])
         ),
         "Duração Média (min)": round(mean_duration / 60, 2),

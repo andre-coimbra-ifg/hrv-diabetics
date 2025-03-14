@@ -47,10 +47,10 @@ Ao final, os resultados serão salvos no diretório `data/output/`, considerando
         ---------- GRUPO: X ----------
         Diretório: ../data/output/truncated/X
         Número de Arquivos: X
-        Duração Máxima (min): X
-        Arquivo com Duração Máxima: filename_trunc_X_min.txt
-        Duração Mínima (min): X
-        Arquivo com Duração Mínima: filename_trunc_X_min.txt
+        Maior Duração (min): X
+        Arquivo com Maior Duração: filename_trunc_X_min.txt
+        Menor Duração (min): X
+        Arquivo com Menor Duração: filename_trunc_X_min.txt
         Duração Média (min): X
         Limite de Qualidade (%): 90.0
         Qualidade Média (%): X
