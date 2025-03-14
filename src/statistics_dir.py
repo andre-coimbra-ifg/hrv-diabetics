@@ -166,7 +166,7 @@ def generate_group_duration_report(group_file_stats, group_name):
     # Cabeçalho do relatório
     lines = []
 
-    lines.append(f"\n\nGRUPO: {group_name.upper()}:")
+    lines.append(f"\n\nGRUPO: {group_name.upper()}")
 
     total_files = len(group_file_stats)
     # Ordena os arquivos pela duração de forma crescente

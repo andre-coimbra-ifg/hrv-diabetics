@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+import os
 
 
 def load_rr_intervals(file_path):
@@ -32,3 +33,22 @@ def save_rr_intervals(file_path, data):
         logging.debug(f"Arquivo salvo com sucesso: {file_path}")
     except Exception as e:
         logging.error(f"Erro ao salvar arquivo {file_path}: {e}")
+
+
+def save_removed_files(removed_files, threshold, output_dir, file_name):
+    """Salva os arquivos removidos em um arquivo."""
+    title = (
+        f"{'='*10} LISTA DE ARQUIVOS REMOVIDOS COM QUALIDADE INFERIOR A {threshold*100:.1f}% {'='*10}\n\n"
+        + "Formato: X.Nome do Arquivo | Qualidade (%)\n\n"
+    )
+
+    output_file = os.path.join(output_dir, file_name)
+    logging.debug(f"Salvando arquivo de arquivos removidos: {output_file}")
+
+    with open(output_file, "w") as f:
+        f.write(title)
+        for file, quality in removed_files.items():
+            f.write(file)
+            f.write(f" | {quality:.2f}\n")
+
+    logging.debug(f"Arquivo de arquivos removidos salvo com sucesso em: {output_file}")

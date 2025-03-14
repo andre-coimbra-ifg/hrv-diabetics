@@ -1,7 +1,7 @@
 import os
 import logging
 import numpy as np
-from file_io import load_rr_intervals, save_rr_intervals
+from file_io import load_rr_intervals, save_rr_intervals, save_removed_files
 from statistics_dir import generate_statistics_report, generate_duration_file_report
 from processing import (
     get_nn_intervals,
@@ -42,6 +42,7 @@ def process_data(control_dir, test_dir, policy="early_valid"):
             f"Nenhum arquivo encontrado nos diretórios '{control_dir}' e '{test_dir}'"
         )
         return
+    removed_files = {}
 
     for file in files[:]:
         rr_intervals = load_rr_intervals(file)
@@ -54,6 +55,8 @@ def process_data(control_dir, test_dir, policy="early_valid"):
             signal_quality = evaluate_signal_quality(rr_intervals)
             if signal_quality < QUALITY_THRESHOLD:
                 files.remove(file)
+                # Salva o nome do arquivo e a qualidade no dicionário
+                removed_files[file] = round(signal_quality * 100, 2)
                 logging.warning(
                     f"Sinal com baixa qualidade ({signal_quality*100:.2f}%), removido da análise: '{file}'"
                 )
@@ -72,6 +75,10 @@ def process_data(control_dir, test_dir, policy="early_valid"):
                     file, DENOISED_OUTPUT_DIR, control_dir, test_dir, "_denoised.txt"
                 )
                 save_rr_intervals(output_file, rr_cleaned)
+
+    save_removed_files(
+        removed_files, QUALITY_THRESHOLD, OUTPUT_DIR, "removidos_baixa_qualidade.txt"
+    )
 
     min_length_minute = (min_length / 60).round(1)
     logging.info(
