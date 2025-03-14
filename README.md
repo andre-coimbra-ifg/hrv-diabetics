@@ -20,6 +20,7 @@ vfc-diabeticos/
 └── requirements.txt
 ```
 
+
 **A metodologia adotada pode ser resumida em 4 etapas:**
 
 1. Descarte das 10 primeiras entradas de RRi de cada arquivo (paciente);
@@ -37,7 +38,8 @@ vfc-diabeticos/
    um determinado valor de tempo (não em quantidade de NNi). Se não informado
    o tempo mínimo desejado, considera-se o arquivo com menor duração como referência.
 
-Ao final, os resultados serão salvos no diretório `data/output/`, considerando 2 subdiretórios:
+
+**Ao final, os resultados serão salvos no diretório `data/output/`, considerando 2 subdiretórios:**
 
 - `denoised/`: com os NNi completos
 - `truncated/`: com os NNi truncados
