@@ -22,7 +22,7 @@ vfc-diabeticos/
 
 **A metodologia adotada pode ser resumida em 4 etapas:**
 
-1. Descarte das 10 primeiras entradas de RRi cada arquivo (paciente);
+1. Descarte das 10 primeiras entradas de RRi de cada arquivo (paciente);
 
 2. Avaliação da qualidade dos sinais de RRi e descarte dos arquivos que não atenderem
    ao limiar estabelecido (90%). A análise da qualidade do sinal é realizada a partir da:
