@@ -28,7 +28,7 @@ def save_rr_intervals(file_path, data):
     """Salva os intervalos RR processados em um arquivo."""
     try:
         logging.debug(f"Salvando arquivo: {file_path}")
-        np.savetxt(file_path, data, fmt="%.6f")
+        np.savetxt(file_path, data, fmt="%.3f")
         logging.debug(f"Arquivo salvo com sucesso: {file_path}")
     except Exception as e:
         logging.error(f"Erro ao salvar arquivo {file_path}: {e}")

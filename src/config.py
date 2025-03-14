@@ -27,7 +27,7 @@ MEDIAN_FILTER_KERNEL_SIZE = 5
 
 # Configurações de logging
 LOG_FILE = os.path.join(BASE_DIR, "../data/logs/rr_processing.log")
-LOG_LEVEL = "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 control_basename = os.path.basename(CONTROL_DIR)
 test_basename = os.path.basename(TEST_DIR)

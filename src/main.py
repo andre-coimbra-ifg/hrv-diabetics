@@ -106,12 +106,14 @@ def run_data_processing_and_analysis():
     trunc_control_dir = get_relative_output_path(TRUNCATED_OUTPUT_DIR, CONTROL_DIR)
     trunc_test_dir = get_relative_output_path(TRUNCATED_OUTPUT_DIR, TEST_DIR)
 
-    report_file = os.path.join(OUTPUT_DIR, "report_trunc.txt")
+    report_file = os.path.join(OUTPUT_DIR, "relatorio_trunc.txt")
     generate_statistics_report(trunc_control_dir, trunc_test_dir, report_file)
 
 
-def run_data_analysis(output_dir, control_dir, test_dir, report_filename="report.txt"):
-    logging.info("Realizando uma análise inicial dos dados...")
+def run_data_analysis(
+    output_dir, control_dir, test_dir, report_filename="relatorio.txt"
+):
+    logging.info("Realizando uma análise básica dos dados...")
     # Definir o nome do arquivo de saída para o relatório
     report_file = os.path.join(output_dir, report_filename)
 
@@ -119,7 +121,7 @@ def run_data_analysis(output_dir, control_dir, test_dir, report_filename="report
     generate_statistics_report(control_dir, test_dir, report_file)
 
     generate_duration_file_report(
-        control_dir, test_dir, report_file.replace(".txt", "_duration.txt")
+        control_dir, test_dir, report_file.replace(".txt", "_duracao.txt")
     )
 
     logging.info("Análise de dados concluída com sucesso.")
@@ -129,7 +131,7 @@ def main():
     setup_logging()
 
     if ask_user("Deseja realizar uma análise inicial dos dados?") == "s":
-        run_data_analysis(OUTPUT_DIR, CONTROL_DIR, TEST_DIR, "report_initial.txt")
+        run_data_analysis(OUTPUT_DIR, CONTROL_DIR, TEST_DIR, "relatorio_inicial.txt")
         if ask_user("Deseja continuar com o processamento dos dados?") == "s":
             run_data_processing_and_analysis()
     else:
